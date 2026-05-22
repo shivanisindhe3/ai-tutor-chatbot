@@ -1,42 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-
-  // Tutor states
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
 
-  // Quiz states
   const [topic, setTopic] = useState("");
   const [quiz, setQuiz] = useState("");
 
-  // Feedback states
   const [feedbackQuestion, setFeedbackQuestion] = useState("");
   const [studentAnswer, setStudentAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
 
-  // Loading
+  const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("chatHistory");
 
-  // Ask AI Tutor
+    if (savedHistory) {
+      setChatHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
   const askQuestion = async () => {
-
     setLoading(true);
     setAnswer("");
 
     try {
-
       const response = await fetch("http://127.0.0.1:8000/chat", {
-
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           subject,
           question,
@@ -44,35 +41,35 @@ function App() {
       });
 
       const data = await response.json();
-
       setAnswer(data.answer);
 
+      const newChat = {
+        subject,
+        question,
+        answer: data.answer,
+      };
+
+      const updatedHistory = [newChat, ...chatHistory];
+
+      setChatHistory(updatedHistory);
+      localStorage.setItem("chatHistory", JSON.stringify(updatedHistory));
     } catch (error) {
-
       setAnswer("Error connecting to backend");
-
     }
 
     setLoading(false);
   };
 
-
-  // Generate Quiz
   const generateQuiz = async () => {
-
     setLoading(true);
     setQuiz("");
 
     try {
-
       const response = await fetch("http://127.0.0.1:8000/quiz", {
-
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           subject,
           topic,
@@ -81,63 +78,48 @@ function App() {
       });
 
       const data = await response.json();
-
       setQuiz(data.quiz);
-
     } catch (error) {
-
       setQuiz("Error connecting to backend");
-
     }
 
     setLoading(false);
   };
 
-
-  // Generate Feedback
   const generateFeedback = async () => {
-
     setLoading(true);
     setFeedback("");
 
     try {
-
       const response = await fetch("http://127.0.0.1:8000/feedback", {
-
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
-          subject: subject,
+          subject,
           question: feedbackQuestion,
           student_answer: studentAnswer,
         }),
       });
 
       const data = await response.json();
-
       setFeedback(data.feedback);
-
     } catch (error) {
-
       setFeedback("Error connecting to backend");
-
     }
 
     setLoading(false);
   };
 
+  const clearHistory = () => {
+    setChatHistory([]);
+    localStorage.removeItem("chatHistory");
+  };
 
   return (
-
     <div className="app-container">
-
       <h1 className="title">AI Tutor Chatbot</h1>
-
-      {/* Tutor Section */}
 
       <h2>AI Tutor</h2>
 
@@ -159,9 +141,6 @@ function App() {
         Ask AI
       </button>
 
-
-      {/* Quiz Section */}
-
       <hr />
 
       <h2>Quiz Generator</h2>
@@ -176,9 +155,6 @@ function App() {
       <button className="ask-button" onClick={generateQuiz}>
         Generate Quiz
       </button>
-
-
-      {/* Feedback Section */}
 
       <hr />
 
@@ -202,13 +178,7 @@ function App() {
         Check Answer
       </button>
 
-
-      {/* Loading */}
-
       {loading && <p>Loading...</p>}
-
-
-      {/* Tutor Response */}
 
       {answer && (
         <div className="answer-box">
@@ -217,18 +187,12 @@ function App() {
         </div>
       )}
 
-
-      {/* Quiz Response */}
-
       {quiz && (
         <div className="answer-box">
           <h3>Quiz</h3>
           <p>{quiz}</p>
         </div>
       )}
-
-
-      {/* Feedback Response */}
 
       {feedback && (
         <div className="answer-box">
@@ -237,6 +201,26 @@ function App() {
         </div>
       )}
 
+      <hr />
+
+      <h2>Chat History</h2>
+
+      <button className="ask-button" onClick={clearHistory}>
+        Clear History
+      </button>
+
+      {chatHistory.map((chat, index) => (
+        <div key={index} className="answer-box">
+          <h4>Subject:</h4>
+          <p>{chat.subject}</p>
+
+          <h4>Question:</h4>
+          <p>{chat.question}</p>
+
+          <h4>Answer:</h4>
+          <p>{chat.answer}</p>
+        </div>
+      ))}
     </div>
   );
 }
