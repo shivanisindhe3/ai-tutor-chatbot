@@ -1,28 +1,27 @@
 from groq import Groq
 from app.config import GROQ_API_KEY
 
-print("LOADED GROQ KEY:", GROQ_API_KEY)
-
 client = Groq(api_key=GROQ_API_KEY)
 
 
-def get_ai_response(question: str) -> str:
+# AI Tutor
+def get_ai_response(question: str, subject: str) -> str:
 
     prompt = f"""
-You are a friendly AI tutor.
+You are an AI tutor.
 
-Explain clearly for beginners.
-Use simple language.
-Give one simple example.
-End with one practice question.
+Subject: {subject}
 
-Student question:
+Student Question:
 {question}
+
+Explain clearly in simple terms with examples.
 """
 
     try:
 
         response = client.chat.completions.create(
+
             model="llama-3.1-8b-instant",
 
             messages=[
@@ -37,48 +36,64 @@ Student question:
             ],
 
             temperature=0.5
+
         )
 
         return response.choices[0].message.content
 
     except Exception as e:
+
         return f"Groq API Error: {str(e)}"
-def generate_quiz(subject: str, topic: str, number_of_questions: int) -> str:
+
+
+# Quiz Generator
+def generate_quiz(subject: str, topic: str, number_of_questions: int):
 
     prompt = f"""
-You are an expert {subject} tutor.
+Generate {number_of_questions} quiz questions for:
 
-Generate {number_of_questions} beginner-friendly quiz questions on:
-
+Subject: {subject}
 Topic: {topic}
 
-For each question:
-- Ask the question
-- Give 4 options
-- Mention the correct answer
-- Give a short explanation
+Include answers.
 """
 
     try:
+
         response = client.chat.completions.create(
+
             model="llama-3.1-8b-instant",
+
             messages=[
-                {"role": "system", "content": f"You are an expert {subject} tutor."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a quiz generator."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
             ],
+
             temperature=0.5
+
         )
 
         return response.choices[0].message.content
 
     except Exception as e:
+
         return f"Groq API Error: {str(e)}"
-def generate_feedback(subject: str, question: str, student_answer: str) -> str:
+
+
+# Feedback Checker
+def generate_feedback(question: str, student_answer: str, subject: str):
 
     prompt = f"""
-You are an expert {subject} tutor.
+You are an AI teacher.
 
-Evaluate the student's answer.
+Subject:
+{subject}
 
 Question:
 {question}
@@ -87,24 +102,82 @@ Student Answer:
 {student_answer}
 
 Give:
-- Score out of 10
-- What is correct
-- What is missing
-- Improved answer
-- One tip to remember
+1. Score out of 10
+2. What is correct
+3. What is missing
+4. Improved answer
+5. Memory tip
 """
 
     try:
+
         response = client.chat.completions.create(
+
             model="llama-3.1-8b-instant",
+
             messages=[
-                {"role": "system", "content": f"You are an expert {subject} tutor."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are an AI feedback evaluator."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
             ],
+
             temperature=0.4
+
         )
 
         return response.choices[0].message.content
 
     except Exception as e:
+
+        return f"Groq API Error: {str(e)}"
+
+
+# PDF Question Answering
+def ask_from_pdf(question: str, context: str) -> str:
+
+    prompt = f"""
+You are an AI tutor.
+
+Answer the student's question using ONLY the PDF context below.
+
+PDF Context:
+{context}
+
+Student Question:
+{question}
+
+If the answer is not in the PDF context, say:
+"I could not find this in the uploaded PDF."
+"""
+
+    try:
+
+        response = client.chat.completions.create(
+
+            model="llama-3.1-8b-instant",
+
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You answer questions from uploaded PDF notes."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+
+            temperature=0.3
+
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+
         return f"Groq API Error: {str(e)}"
