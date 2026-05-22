@@ -18,3 +18,13 @@ class QuizRequest(BaseModel):
 
 class QuizResponse(BaseModel):
     quiz: str
+
+
+class FeedbackRequest(BaseModel):
+    subject: str
+    question: str
+    student_answer: str
+
+
+class FeedbackResponse(BaseModel):
+    feedback: str

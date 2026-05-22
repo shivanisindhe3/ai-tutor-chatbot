@@ -73,3 +73,38 @@ For each question:
 
     except Exception as e:
         return f"Groq API Error: {str(e)}"
+def generate_feedback(subject: str, question: str, student_answer: str) -> str:
+
+    prompt = f"""
+You are an expert {subject} tutor.
+
+Evaluate the student's answer.
+
+Question:
+{question}
+
+Student Answer:
+{student_answer}
+
+Give:
+- Score out of 10
+- What is correct
+- What is missing
+- Improved answer
+- One tip to remember
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": f"You are an expert {subject} tutor."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"Groq API Error: {str(e)}"
