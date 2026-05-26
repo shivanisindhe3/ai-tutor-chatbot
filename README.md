@@ -153,6 +153,35 @@ GROQ_API_KEY=your_groq_api_key_here
 - Streaming AI Responses
 - Deployment
 
+## 📸 Screenshots
+
+### Main Dashboard
+
+![Dashboard](assets/dashboard.png)
+
+---
+
+### AI Tutor Working
+
+![AI Tutor](assets/ai-tutor.png)
+
+---
+
+### Quiz Generator
+
+![Quiz Generator](assets/quiz-generator.png)
+
+---
+
+### PDF Upload & Chunking
+
+![PDF Upload](assets/pdf-upload.png)
+
+---
+
+### PDF Question Answering (RAG)
+
+![PDF Answer](assets/pdf-answer.png)
 ---
 
 # Author

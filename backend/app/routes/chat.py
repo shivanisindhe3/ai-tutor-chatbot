@@ -1,15 +1,24 @@
 from fastapi import APIRouter
-from app.models.schemas import ChatRequest, ChatResponse
+from pydantic import BaseModel
+
 from app.services.llm_service import get_ai_response
 
 router = APIRouter()
 
 
-@router.post("/chat", response_model=ChatResponse)
+class ChatRequest(BaseModel):
+    subject: str
+    question: str
+
+
+@router.post("/chat")
 def chat(request: ChatRequest):
 
-    user_question = request.question
+    ai_answer = get_ai_response(
+        request.question,
+        request.subject
+    )
 
-    ai_answer = get_ai_response(user_question)
-
-    return ChatResponse(answer=ai_answer)
+    return {
+        "answer": ai_answer
+    }
