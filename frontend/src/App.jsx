@@ -14,8 +14,20 @@ function App() {
   const [studentAnswer, setStudentAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
 
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfMessage, setPdfMessage] = useState("");
+  const [pdfQuestion, setPdfQuestion] = useState("");
+  const [pdfAnswer, setPdfAnswer] = useState("");
+
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const suggestedQuestions = [
+    "Summarize this PDF",
+    "Explain the key concepts",
+    "Generate quiz questions from this PDF",
+    "What are the important topics?",
+  ];
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("chatHistory");
@@ -52,7 +64,6 @@ function App() {
 
       const updatedHistory = [newChat, ...chatHistory];
       setChatHistory(updatedHistory);
-
       localStorage.setItem("chatHistory", JSON.stringify(updatedHistory));
     } catch (error) {
       setAnswer("Error connecting to backend");
@@ -113,6 +124,66 @@ function App() {
     setLoading(false);
   };
 
+  const uploadPdf = async () => {
+    if (!pdfFile) {
+      setPdfMessage("Please select a PDF first.");
+      return;
+    }
+
+    setLoading(true);
+    setPdfMessage("");
+
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      setPdfMessage(`${data.message}. Total chunks: ${data.total_chunks}`);
+    } catch (error) {
+      setPdfMessage("Error uploading PDF");
+    }
+
+    setLoading(false);
+  };
+
+  const askPdf = async (customQuestion = null) => {
+    const finalQuestion = customQuestion || pdfQuestion;
+
+    if (!finalQuestion.trim()) {
+      setPdfAnswer("Please enter a PDF question first.");
+      return;
+    }
+
+    setLoading(true);
+    setPdfAnswer("");
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/ask-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: finalQuestion,
+        }),
+      });
+
+      const data = await response.json();
+
+      setPdfQuestion(finalQuestion);
+      setPdfAnswer(data.answer);
+    } catch (error) {
+      setPdfAnswer("Error asking PDF");
+    }
+
+    setLoading(false);
+  };
+
   const clearHistory = () => {
     setChatHistory([]);
     localStorage.removeItem("chatHistory");
@@ -126,6 +197,7 @@ function App() {
         <div className="sidebar-item">Chat Tutor</div>
         <div className="sidebar-item">Quiz Generator</div>
         <div className="sidebar-item">Feedback Checker</div>
+        <div className="sidebar-item">PDF Learning</div>
 
         <button className="ask-button" onClick={clearHistory}>
           Clear History
@@ -231,6 +303,68 @@ function App() {
           </div>
 
           <div className="section-card">
+            <h2>PDF Learning Assistant</h2>
+
+            <input
+              type="file"
+              accept="application/pdf"
+              className="input-field"
+              onChange={(e) => setPdfFile(e.target.files[0])}
+            />
+
+            {pdfFile && (
+              <div className="uploaded-file">
+                Uploaded File: {pdfFile.name}
+              </div>
+            )}
+
+            <button className="ask-button" onClick={uploadPdf}>
+              Upload PDF
+            </button>
+
+            {pdfMessage && (
+              <div className="answer-box">
+                <p>{pdfMessage}</p>
+              </div>
+            )}
+
+            <div className="suggested-questions">
+              <h3>Suggested Questions</h3>
+
+              {suggestedQuestions.map((item, index) => (
+                <button
+                  key={index}
+                  className="ask-button"
+                  onClick={() => {
+                    setPdfQuestion(item);
+                    askPdf(item);
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              className="textarea-field"
+              placeholder="Ask a question from the uploaded PDF..."
+              value={pdfQuestion}
+              onChange={(e) => setPdfQuestion(e.target.value)}
+            />
+
+            <button className="ask-button" onClick={() => askPdf()}>
+              Ask PDF
+            </button>
+
+            {pdfAnswer && (
+              <div className="answer-box">
+                <h3>PDF Answer</h3>
+                <ReactMarkdown>{pdfAnswer}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+
+          <div className="section-card">
             <h2>Full Chat History</h2>
 
             {chatHistory.map((chat, index) => (
@@ -247,7 +381,11 @@ function App() {
             ))}
           </div>
 
-          {loading && <p>Loading...</p>}
+          {loading && (
+  <div className="loading-box">
+    AI is thinking...
+  </div>
+)}
         </div>
       </main>
     </div>

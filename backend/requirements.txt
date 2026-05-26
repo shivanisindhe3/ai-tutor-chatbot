@@ -5,3 +5,5 @@ pydantic
 groq
 pypdf
 python-multipart
+sentence-transformers
+chromadb
